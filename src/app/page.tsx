@@ -1,101 +1,106 @@
-import Image from "next/image";
+'use client'
+
+import React, { useState } from 'react'
+import { Input } from "@/components/ui/input"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Loader2, ChevronLeft, ChevronRight, Download, Search } from 'lucide-react'
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [url, setUrl] = useState('')
+  const [images, setImages] = useState<Array<{src: string, alt: string}>>([])
+  const [currentImageIndex, setCurrentImageIndex] = useState(-1)
+  const [isLoading, setIsLoading] = useState(false)
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+  const fetchImages = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url }),
+      })
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`)
+      }
+      const data = await response.json()
+      if (data.images && data.images.length > 0) {
+        setImages(data.images)
+        setCurrentImageIndex(0)
+      } else {
+        setImages([])
+        setCurrentImageIndex(-1)
+      }
+    } catch (error) {
+      console.error('Error fetching images:', error)
+      setImages([])
+      setCurrentImageIndex(-1)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handlePrevImage = () => {
+    if (images.length > 0) {
+      setCurrentImageIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1))
+    }
+  }
+
+  const handleNextImage = () => {
+    if (images.length > 0) {
+      setCurrentImageIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0))
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-black text-cyan-500 p-8 flex flex-col items-center">
+      <h1 className="text-4xl font-bold mb-8 text-center">Cyber Image Scraper</h1>
+      <Card className="w-full max-w-md bg-gray-900 border-cyan-500 mb-8">
+        <CardContent className="p-6">
+          <div className="flex space-x-2 mb-4">
+            <Input
+              type="url"
+              placeholder="Enter URL to scrape"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              className="flex-grow bg-gray-800 text-cyan-500 border-cyan-500"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+            <Button onClick={fetchImages} disabled={isLoading} className="bg-cyan-500 text-black hover:bg-cyan-600">
+              {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
+              {isLoading ? 'Scraping...' : 'Scrape'}
+            </Button>
+          </div>
+          {images.length > 0 && currentImageIndex !== -1 && (
+            <div className="relative">
+              <img
+                src={images[currentImageIndex].src || "/placeholder.svg"}
+                alt={images[currentImageIndex].alt}
+                className="w-full h-64 object-cover rounded-md border-2 border-cyan-500"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-2 rounded-b-md">
+                <p className="text-sm text-cyan-300 truncate">{images[currentImageIndex].alt}</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      {images.length > 0 && (
+        <div className="flex justify-between w-full max-w-md">
+          <Button onClick={handlePrevImage} className="bg-gray-800 hover:bg-gray-700">
+            <ChevronLeft className="mr-2 h-4 w-4" /> Previous
+          </Button>
+          <Button onClick={handleNextImage} className="bg-gray-800 hover:bg-gray-700">
+            Next <ChevronRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+      )}
+      {images.length > 0 && (
+        <Button className="mt-4 bg-cyan-500 text-black hover:bg-cyan-600">
+          <Download className="mr-2 h-4 w-4" /> Save Images
+        </Button>
+      )}
     </div>
-  );
+  )
 }
