@@ -1,15 +1,19 @@
 'use client'
 
-import React, { useState } from 'react'
+import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2, ChevronLeft, ChevronRight, Download, Search } from 'lucide-react'
 
 export default function Home() {
-  const [url, setUrl] = useState('')
-  const [images, setImages] = useState<Array<{src: string, alt: string}>>([])
-  const [currentImageIndex, setCurrentImageIndex] = useState(-1)
+  // テスト用の初期データを設定
+  const [url, setUrl] = useState("")
+  const [images, setImages] = useState<Array<{src: string, alt: string}>>([
+    { src: "/placeholder.svg?height=300&width=300", alt: "Test image 1" },
+    { src: "/placeholder.svg?height=300&width=300", alt: "Test image 2" }
+  ])
+  const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
 
   const fetchImages = async () => {
@@ -29,29 +33,26 @@ export default function Home() {
       if (data.images && data.images.length > 0) {
         setImages(data.images)
         setCurrentImageIndex(0)
-      } else {
-        setImages([])
-        setCurrentImageIndex(-1)
       }
     } catch (error) {
       console.error('Error fetching images:', error)
-      setImages([])
-      setCurrentImageIndex(-1)
+      // エラー時もテスト用データを維持
+      setImages([
+        { src: "/placeholder.svg?height=300&width=300", alt: "Test image 1" },
+        { src: "/placeholder.svg?height=300&width=300", alt: "Test image 2" }
+      ])
+      setCurrentImageIndex(0)
     } finally {
       setIsLoading(false)
     }
   }
 
   const handlePrevImage = () => {
-    if (images.length > 0) {
-      setCurrentImageIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1))
-    }
+    setCurrentImageIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1))
   }
 
   const handleNextImage = () => {
-    if (images.length > 0) {
-      setCurrentImageIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0))
-    }
+    setCurrentImageIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0))
   }
 
   return (
@@ -69,10 +70,10 @@ export default function Home() {
             />
             <Button onClick={fetchImages} disabled={isLoading} className="bg-cyan-500 text-black hover:bg-cyan-600">
               {isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}
-              {isLoading ? 'Scraping...' : 'Scrape'}
+              {isLoading ? "Scraping..." : "Scrape"}
             </Button>
           </div>
-          {images.length > 0 && currentImageIndex !== -1 && (
+          {images.length > 0 && (
             <div className="relative">
               <img
                 src={images[currentImageIndex].src || "/placeholder.svg"}
@@ -86,16 +87,25 @@ export default function Home() {
           )}
         </CardContent>
       </Card>
-      {images.length > 0 && (
-        <div className="flex justify-between w-full max-w-md">
-          <Button onClick={handlePrevImage} className="bg-gray-800 hover:bg-gray-700">
-            <ChevronLeft className="mr-2 h-4 w-4" /> Previous
-          </Button>
-          <Button onClick={handleNextImage} className="bg-gray-800 hover:bg-gray-700">
-            Next <ChevronRight className="ml-2 h-4 w-4" />
-          </Button>
-        </div>
-      )}
+      
+      {/* ナビゲーションボタンを常に表示 */}
+      <div className="flex justify-between w-full max-w-md">
+        <Button 
+          onClick={handlePrevImage} 
+          className="bg-gray-800 hover:bg-gray-700 text-cyan-500"
+          disabled={images.length === 0}
+        >
+          <ChevronLeft className="mr-2 h-4 w-4" /> Previous
+        </Button>
+        <Button 
+          onClick={handleNextImage} 
+          className="bg-gray-800 hover:bg-gray-700 text-cyan-500"
+          disabled={images.length === 0}
+        >
+          Next <ChevronRight className="ml-2 h-4 w-4" />
+        </Button>
+      </div>
+
       {images.length > 0 && (
         <Button className="mt-4 bg-cyan-500 text-black hover:bg-cyan-600">
           <Download className="mr-2 h-4 w-4" /> Save Images
