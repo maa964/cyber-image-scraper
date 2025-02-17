@@ -5,14 +5,12 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Loader2, ChevronLeft, ChevronRight, Download, Search } from 'lucide-react'
+import { toast } from "@/components/ui/use-toast"
+import Image from 'next/image'
 
 export default function Home() {
-  // テスト用の初期データを設定
   const [url, setUrl] = useState("")
-  const [images, setImages] = useState<Array<{src: string, alt: string}>>([
-    { src: "/placeholder.svg?height=300&width=300", alt: "Test image 1" },
-    { src: "/placeholder.svg?height=300&width=300", alt: "Test image 2" }
-  ])
+  const [images, setImages] = useState<Array<{src: string, alt: string}>>([])
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isLoading, setIsLoading] = useState(false)
 
@@ -33,15 +31,26 @@ export default function Home() {
       if (data.images && data.images.length > 0) {
         setImages(data.images)
         setCurrentImageIndex(0)
+        toast({
+          title: "Images scraped successfully",
+          description: `Found ${data.images.length} images`,
+        })
+      } else {
+        setImages([])
+        toast({
+          title: "No images found",
+          description: "The provided URL doesn't contain any images",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Error fetching images:', error)
-      // エラー時もテスト用データを維持
-      setImages([
-        { src: "/placeholder.svg?height=300&width=300", alt: "Test image 1" },
-        { src: "/placeholder.svg?height=300&width=300", alt: "Test image 2" }
-      ])
-      setCurrentImageIndex(0)
+      toast({
+        title: "Error",
+        description: "Failed to scrape images. Please try again.",
+        variant: "destructive",
+      })
+      setImages([])
     } finally {
       setIsLoading(false)
     }
@@ -58,7 +67,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-black text-cyan-500 p-8 flex flex-col items-center">
       <h1 className="text-4xl font-bold mb-8 text-center">Cyber Image Scraper</h1>
-      <Card className="w-full max-w-md bg-gray-900 border-cyan-500 mb-8">
+      <Card className="w-full max-w-2xl bg-gray-900 border-cyan-500 mb-8">
         <CardContent className="p-6">
           <div className="flex space-x-2 mb-4">
             <Input
@@ -73,23 +82,32 @@ export default function Home() {
               {isLoading ? "Scraping..." : "Scrape"}
             </Button>
           </div>
-          {images.length > 0 && (
-            <div className="relative">
-              <img
+          <div className="relative w-full h-96 mb-4">
+            {images.length > 0 ? (
+              <Image
                 src={images[currentImageIndex].src || "/placeholder.svg"}
-                alt={images[currentImageIndex].alt}
-                className="w-full h-64 object-cover rounded-md border-2 border-cyan-500"
+                alt=""
+                layout="fill"
+                objectFit="cover"
+                className="rounded-md border-2 border-cyan-500"
               />
-              <div className="absolute bottom-0 left-0 right-0 bg-black bg-opacity-75 p-2 rounded-b-md">
-                <p className="text-sm text-cyan-300 truncate">{images[currentImageIndex].alt}</p>
-              </div>
-            </div>
+            ) : (
+              <Image
+                src="/placeholder.svg"
+                alt=""
+                layout="fill"
+                objectFit="cover"
+                className="rounded-md border-2 border-cyan-500"
+              />
+            )}
+          </div>
+          {images.length > 0 && (
+            <p className="text-sm text-cyan-300 mb-4">{images[currentImageIndex].alt}</p>
           )}
         </CardContent>
       </Card>
       
-      {/* ナビゲーションボタンを常に表示 */}
-      <div className="flex justify-between w-full max-w-md">
+      <div className="flex justify-between w-full max-w-2xl">
         <Button 
           onClick={handlePrevImage} 
           className="bg-gray-800 hover:bg-gray-700 text-cyan-500"
